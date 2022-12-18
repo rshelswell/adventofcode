@@ -1,3 +1,4 @@
 
 if __name__ == '__main__':
-    pass
+    import 'day7.py'
+
