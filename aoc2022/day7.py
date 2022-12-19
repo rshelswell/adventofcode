@@ -71,7 +71,7 @@ class Directory:
 
 def pt1():
     wd = Directory('/')
-    with open('day7.input', 'r') as f:
+    with open('aoc2022/day7.input', 'r') as f:
         line = 1
         for l in f:
             # parse structure
