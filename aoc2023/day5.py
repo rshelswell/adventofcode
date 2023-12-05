@@ -96,7 +96,7 @@ def day5a():
 
 
 def day5b():
-    file5 = open(r'aoc2023/day5.input', 'r')
+    file5 = open(r'aoc2023/day5ex.input', 'r')
     Lines = file5.readlines()
     file5.close()
     seeds = []
@@ -115,7 +115,10 @@ def day5b():
             continue
         if section == 1:
             # seed list
-            seeds = [int(i) for i in re.findall(r'(\d+)', line)]
+            seed_data = [int(i) for i in re.findall(r'(\d+)', line)]
+            temp = list(zip(seed_data[::2], seed_data[1::2]))
+            seeds = []
+            seeds.extend(list(range(i[0],i[0]+i[1])) for i in temp)
         elif section == 2:
             # seed to soil map
             if ":" in line:
@@ -165,5 +168,5 @@ def day5b():
     print(f"location = {loc}")
 
 if __name__ == "__main__":
-    day5a()
+    day5b()
         
