@@ -1,6 +1,7 @@
 from pprint import pprint
 
 def is_adjacent(pair1, pair2):
+    print(f"Checking {pair1} and {pair2}")
     return abs(pair1[0]-pair2[0]) < 2 and abs(pair1[1]-pair2[1]) < 2
 
 def day9a():
@@ -57,6 +58,7 @@ def day9b():
         repeats = int(line[2:].strip())
         print(direction, repeats)
         for r in range(repeats):
+            direction = line[0]
             if direction == "R":
                 parts[0][0] += 1
             elif direction == "L":
@@ -67,7 +69,8 @@ def day9b():
                 parts[0][1] -= 1
             for p in range(9):
                 if not is_adjacent(parts[p], parts[p+1]):
-                    oldxy = [parts[p+1][0],parts[p+1]]
+                    print("need to move")
+                    oldxy = [parts[p+1][0],parts[p+1][1]]
                     match direction:
                         case "R":
                             parts[p+1] = [parts[p][0]-1,parts[p][1]]
@@ -77,7 +80,16 @@ def day9b():
                             parts[p+1] = [parts[p][0],parts[p][1]-1]
                         case "D":
                             parts[p+1] = [parts[p][0],parts[p][1]+1]
+                        case "UR":
+                            parts[p+1] = [parts[p+1][0]+1,parts[p+1][1]+1]
+                        case "DR":
+                            parts[p+1] = [parts[p+1][0]+1,parts[p+1][1]-1]
+                        case "UL":
+                            parts[p+1] = [parts[p+1][0]-1,parts[p+1][1]+1]
+                        case "DL":
+                            parts[p+1] = [parts[p+1][0]-1,parts[p+1][1]-1]
                     delta_xy = [parts[p+1][0] - oldxy[0], parts[p+1][1] - oldxy[1]]
+                    
                     match delta_xy:
                         case [1,0]: #R
                             direction = "R"
@@ -87,11 +99,24 @@ def day9b():
                             direction = "U"
                         case [1,0]: #D
                             direction = "D"
+                        case [1,1]: #UR
+                            direction = "UR"
+                        case [1,-1]: #DR
+                            direction = "DR"
+                        case [-1,1]: #UL
+                            direction = "UL"
+                        case [-1,-1]: #DL
+                            direction = "DL"
+                        case _:
+                            break
+                    tail_locations.add((parts[-1][0],parts[-1][1]))
                 else:
                     break
-            tail_locations.add((parts[-1][0],parts[-1][1]))
-        print(parts)
-        
+                print(parts)
+            else:
+                continue
+            continue
+            
             
     print(f"End position of head is {parts[0]}")
     print(f"End position of tail is {parts[-1]}")
