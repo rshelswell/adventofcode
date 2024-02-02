@@ -1,5 +1,7 @@
 import itertools
 import bingo
+import numpy as np
+import re
 from pprint import pprint
 from statistics import mode, multimode
 
@@ -106,7 +108,57 @@ def day4():
                 winners.append(bcard.get_sum_unused()*ball)
     print(winners[0], winners[-1])
 
+def day5():
+    file = open("aoc2021/5.in", "r")
+    lines = file.readlines()
+    file.close()
+    max_x = 0
+    max_y = 0
+    coords = []
+    for line in lines:
+        coords.append([int(x) for x in re.findall("(\d+)", line)])
+        max_x = max(max(coords[-1][0::2]), max_x)
+        max_y = max(max(coords[-1][1::2]), max_y)
+    grid = np.tile(0, (max_y+1, max_x+1))
+    for coord_list in coords:
+        if coord_list[0] == coord_list[2]:
+            #vertical line
+            y1 = min(coord_list[1::2])
+            y2 = max(coord_list[1::2]) + 1
+            for y in range(y1,y2):
+                grid[y][coord_list[0]] += 1
+        elif coord_list[1] == coord_list[3]:
+            #horizontal line
+            x1 = min(coord_list[::2])
+            x2 = max(coord_list[::2]) + 1
+            for x in range(x1,x2):
+                grid[coord_list[1]][x] += 1
+        else:
+            #diagonal - ignore for part 1
+            x1 = coord_list[0]
+            y1 = coord_list[1]
+            x2 = coord_list[2]
+            y2 = coord_list[3]
+
+            m = (y2-y1)//(x2-x1)
+            print(m)
+
+            # y-y1=(y2-y1)/(x2-x1) (x-x1)
+            if x1 > x2:
+                step = -1
+                diff = -1
+            else:
+                step = 1
+                diff = 1
+            for x in range(x1,x2+diff, step):
+                y = m*(x-x1)+y1
+                grid[y][x] += 1
+    pprint(grid)
+    print((grid >= 2).sum())
+
+
+
 if __name__ == "__main__":
-    day4()
+    day5()
 
     
