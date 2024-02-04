@@ -2,8 +2,9 @@ import itertools
 import bingo
 import numpy as np
 import re
+from collections import Counter
 from pprint import pprint
-from statistics import mode, multimode
+from statistics import mode, multimode, median, median_high, median_low
 
 
 def pairwise(iterable):
@@ -156,9 +157,50 @@ def day5():
     pprint(grid)
     print((grid >= 2).sum())
 
+def day6():
+    file = open("aoc2021/test.in", "r")
+    fish = np.array([int(x) for x in file.readline().strip().split(',')])
+    file.close()
+    
+    for i in range(18):
+        c = Counter(fish)[0]
+        fish -= 1
+        fish[fish == -1] = 6
+        fish = np.append(fish,[8 for i in range(c)])
+
+    print(len(fish))
+
+def day6_2():
+    file = open("aoc2021/6.in", "r")
+    start_fish = [x for x in file.readline().strip().split(',')]
+    file.close()
+    fish = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0}
+    for f in start_fish:
+        fish[int(f)] += 1
+    for i in range(256):
+        new_fish = fish[0]
+        for j in range(8):
+            fish[j]=fish[j+1]
+        fish[6] += new_fish
+        fish[8] = new_fish
+    print(sum(fish.values()))
+
+def day7():
+    file = open("aoc2021/7.in", "r")
+    data = [int(x) for x in file.readline().split(",")]
+    file.close()
+    print(median(data), median_low(data), median_high(data))
+    x = median(data)
+    min_sum = sum([abs(d-x) for d in data])
+    print(min_sum)
+
+    min_sum = 10000000000
+    for x in range(min(data), max(data)):
+        min_sum = min((min_sum,sum([abs(d-x)*(abs(d-x)+1)/2 for d in data])))
+    print(min_sum)
 
 
 if __name__ == "__main__":
-    day5()
+    day7()
 
     
