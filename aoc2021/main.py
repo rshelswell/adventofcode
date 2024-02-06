@@ -1,8 +1,11 @@
 import itertools
 import bingo
+import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import re
-from collections import Counter
+from collections import Counter, defaultdict
+from math import prod
 from pprint import pprint
 from statistics import mode, multimode, median, median_high, median_low
 
@@ -199,8 +202,333 @@ def day7():
         min_sum = min((min_sum,sum([abs(d-x)*(abs(d-x)+1)/2 for d in data])))
     print(min_sum)
 
+def day8():
+    file = open("aoc2021/8.in", "r")
+    lines = file.readlines()
+    file.close()
+    count = 0
+    for line in lines:
+        count += sum([1 for x in line.strip().split('|')[1].split() if len(x) in (2, 3, 4, 7)])
+    print(count)
+    count = 0
+    for line in lines:
+        patterns = line.strip().split("|")[0].split()
+        values = line.strip().split("|")[1].split()
+        patterns.sort(key=len)
+        pattern_dict = dict()
+        pattern_dict.update({'1': patterns[0]})
+        pattern_dict.update({'7': patterns[1]})
+        pattern_dict.update({'4': patterns[2]})
+        pattern_dict.update({'8': patterns[9]})
+        indices_90 = [i+6 for i, item in enumerate(patterns[6:9]) if all(c in item for c in pattern_dict['1'])]
+        index_6 = np.setdiff1d([6,7,8], indices_90)[0]
+        pattern_dict.update({'6': patterns[index_6]})
+        index_9 = [i+6 for i, item in enumerate(patterns[6:9]) if all(c in item for c in pattern_dict['4'])][0]
+        pattern_dict.update({'9': patterns[index_9]})
+        pattern_dict.update({'0': patterns[np.setdiff1d(indices_90, [index_9])[0]]})
+        index_3 = [i+3 for i, item in enumerate(patterns[3:6]) if all(c in item for c in pattern_dict['1'])][0]
+        pattern_dict.update({'3': patterns[index_3]})
+        index_5 = [i+3 for i, item in enumerate(patterns[3:6]) if all(c in pattern_dict['6'] for c in item)][0]
+        pattern_dict.update({'5': patterns[index_5]})
+        index_2 = np.setdiff1d([3,4,5],[index_5, index_3])[0]
+        pattern_dict.update({'2': patterns[index_2]})
+        digit = ''
+        for value in values:
+            digit += [key for key, val in pattern_dict.items() if set(value) == set(val)][0]
+        count+=int(digit)
+    print(count)
+
+def day9():
+    file = open("aoc2021/9.in", "r")
+    lines = file.readlines()
+    file.close()
+    data = [line.strip() for line in lines]
+    del lines
+    height = len(data)
+    width = len(data[0])
+    risk = 0
+    for h in range(height):
+        for w in range(width):
+            N=True
+            E=True
+            S=True
+            W=True
+            if h > 0:
+                N = data[h][w] < data[h-1][w]
+            if h < height - 1:
+                S = data[h][w] < data[h+1][w]
+            if w > 0:
+                W = data[h][w] < data[h][w-1]
+            if w < width - 1:
+                E = data[h][w] < data[h][w+1]
+            if all([N,E,S,W]):
+                risk += 1 + int(data[h][w])
+    print(risk)
+
+
+    # Initialize the list of region sizes and the number of rows and columns
+    sizes = []
+ 
+    # Define a helper function that performs Depth First Search from a given cell
+    def dfs(i, j):
+        # Check if the cell is valid and has value 0
+        if i < 0 or i >= height or j < 0 or j >= width or arr[i][j] != 0:
+            return 0
+        # Mark the cell as visited by setting it to 1
+        arr[i][j] = 1
+        # Recursively explore the four adjacent cells and add their sizes
+        return 1 + dfs(i-1, j) + dfs(i+1, j) + dfs(i, j-1) + dfs(i, j+1)
+    arr = []
+    for d in data:
+        intlist = [1 if x == 9 else 0 for x in list(map(int, d))]
+        arr.append(intlist)
+    arr = np.array(arr)
+
+    # Loop through the 2D array and start DFS from each 0 cell
+    for i in range(height):
+        for j in range(width):
+            if arr[i][j] == 0:
+                # Get the size of the current region and append it to the list
+                size = dfs(i, j)
+                sizes.append(size)
+
+    # Print the list of region sizes
+    print(sorted(sizes))
+    print(prod(sorted(sizes)[-3:]))
+            
+def day10():
+    file = open("aoc2021/10.in", "r")
+    lines = file.readlines()
+    file.close()
+    scores = {')': 3 , ']': 57, '}': 1197, '>': 25137}
+    closes = {'(':')', '{':'}', '[':']', '<':'>'}
+    illegals = 0
+    incompletes = []
+    for line in lines:
+        corrupt = False
+        entries = []
+        for c in line.strip():
+            if c in ('(', '[', '{', '<'):
+                # open a chunk is always OK
+                entries.append(c)
+                
+            elif c == closes[entries[-1]]:
+                # chunk closed correctly
+                entries.pop()
+            else:
+                corrupt = True
+                illegals += scores[c]
+            if corrupt:
+                break
+        if not corrupt:
+            incompletes.append(entries)
+
+    print(illegals)
+
+    line_scores = []
+    close_scores = {')': 1,']': 2, '}': 3,'>': 4}
+    for incomplete in incompletes:
+        ls = 0
+        while incomplete:
+            ls *= 5
+            ls += close_scores[closes[incomplete.pop()]]
+        line_scores.append(ls)
+
+
+    print(median(line_scores))
+
+def day11():
+    file = open("aoc2021/11.in", "r")
+    lines = file.readlines()
+    file.close()
+    data = np.array([int(x) for line in lines for x in line.strip()])
+    data = np.reshape(data, (len(lines),-1))
+    print(data)
+
+    flashes = 0
+    height = len(data)
+    width = len(data[0])
+    flashed = []
+    counting = 0
+    while len(flashed) < height*width:
+        data += 1
+        # get all octopuses with value > 9
+        _10s = np.where(data > 9)
+        flashed = []
+        while len(_10s[0]):
+            for y, x in zip(_10s[0], _10s[1]):
+                if (x,y) in flashed:
+                    # print(f"already checked {x},{y}")
+                    continue
+                else:
+                    flashed.append((x,y))
+                data[max(y-1,0):min(y+2,height), max(x-1,0):min(x+2,width)] += 1
+                # print(data)
+            _10s = np.where(data > 9)
+            data = np.where(data<=9, data, -1000)
+        flashes += len(flashed)
+        data = np.where(data>0, data, 0)
+        print(f"step: {counting}, flashes: {len(flashed)}, total flashes: {flashes}")
+        counting += 1
+    print(data)
+    print(counting)
+
+def day12():
+    file = open("aoc2021/12.in", "r")
+    lines = file.readlines()
+    file.close()
+    tunnels = {}
+    visited = defaultdict()
+    edges = []
+    for line in lines:
+        ends = line.strip().split("-")
+        if ends[0] in tunnels:
+            tunnels.update({ends[0]: tunnels[ends[0]] + [ends[1]]})
+        else:
+            tunnels.update({ends[0]:[ends[1]]})
+            visited.update({ends[0]:0})
+        if ends[1] in tunnels:
+            tunnels.update({ends[1]: tunnels[ends[1]] + [ends[0]]})
+        else:
+            tunnels.update({ends[1]:[ends[0]]})
+            visited.update({ends[1]:0})
+        edges.append((ends[0], ends[1]))
+    
+    def find_routes(graph, start='start', end='end'):
+        routes = []
+
+        partial_routes = [(start, [start])]
+
+        while partial_routes:
+            node, path = partial_routes.pop(0)
+            if node == end:
+                routes.append(path)
+            else:
+                for neighbour in graph.neighbors(node):
+                    if neighbour[0] == start or neighbour[0] == 'start':
+                        continue
+                    if neighbour[0].islower() and neighbour in path:
+                        continue
+                    partial_routes.append((neighbour, path + [neighbour]))
+
+        return routes
+        
+    def find_routes_2(graph, start='start', end='end', route=[]):
+        visited[start] += 1
+        route.append(start)
+        if start == end:
+            #arrived
+            yield route
+        else:
+            small_caves = len([item for item, count in Counter([i for i in route if i.islower()]).items() if count > 1])
+            for node in graph.neighbors(start):
+                if node == 'start':
+                    continue
+                if visited[node] == 0 or node.isupper() or visited[node] < 2 and small_caves == 0:
+                    yield from find_routes_2(graph, node, end, route)
+        route.pop()
+        visited[start] -= 1
+
+    
+    G = nx.Graph()
+    G.add_edges_from(edges)
+
+    routes = find_routes(G)
+    # print(routes)
+    print(f"There are {len(routes)} routes")
+
+    routes = find_routes_2(G)
+    r_count = 0
+    for r in routes:
+        r_count += 1
+        print(r_count, r)
+    
+def day13():
+    file = open("aoc2021/13.in", "r")
+    lines = file.readlines()
+    file.close()
+
+    dot_locations = set()
+    fold_instructions = []
+
+    for line in lines:
+        if 0 < len(line.strip()) < 11:
+            #it's a coordinate pair
+            dot_locations.add(tuple(int(item) for item in line.strip().split(",")))
+        elif len(line.strip()) > 11:
+            #it's a folding instruction
+            dir = line.strip()[11]
+            loc = int(line.strip()[13:])
+            fold_instructions.append((dir, loc))
+    
+    for axis, pos in fold_instructions:
+        if axis == 'y':
+            #points below pos will reflect upwards
+            tmp_set = set()
+            for dot in dot_locations:
+                if dot[1] < pos:
+                    tmp_set.add(dot)
+                else:
+                    dot_y = 2 * pos - dot[1]
+                    tmp_set.add((dot[0], dot_y))
+        elif axis == 'x':
+            #points right of pos will reflect left
+            tmp_set = set()
+            for dot in dot_locations:
+                if dot[0] < pos:
+                    tmp_set.add(dot)
+                else:
+                    dot_x = 2 * pos - dot[0]
+                    tmp_set.add((dot_x, dot[1]))
+        dot_locations.clear()
+        dot_locations = dot_locations.union(tmp_set)
+        
+        print(dot_locations)
+        print(len(dot_locations))
+
+    x = []
+    y = []
+    for x_i, y_i in dot_locations:
+        x.append(x_i)
+        y.append(-y_i)
+    
+    plt.style.use('_mpl-gallery')
+    # plot
+    fig, ax = plt.subplots()
+    
+    ax.scatter(x, y)
+
+    ax.set(xlim=(0, 42), xticks=np.arange(1, 42),
+        ylim=(-7, 1), yticks=np.arange(1, 7))
+
+    plt.show()
+
+def day14():
+    file = open("aoc2021/14.in", "r")
+    lines = file.readlines()
+    file.close()
+    polymer = lines.pop(0).strip()
+    lines.pop(0)
+    insertions = defaultdict()
+
+    for line in lines:
+        line = line.strip()
+        insertions[line[0:2]] = line[-1]
+    
+    for i in range(10):
+        new_polymer = ''
+        for pair in itertools.pairwise(polymer):
+            new_polymer += pair[0] + insertions[''.join(pair)]
+        polymer = new_polymer + polymer[-1]
+    
+    print(len(polymer))
+    cnt = Counter(polymer)
+    most = cnt.most_common(1)
+    least = cnt.most_common()[-1]
+    print(most[0][1]-least[1])
+
 
 if __name__ == "__main__":
-    day7()
+    day14()
 
     
