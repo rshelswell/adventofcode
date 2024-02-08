@@ -5,6 +5,7 @@ import networkx as nx
 import numpy as np
 import re
 from collections import Counter, defaultdict
+from functools import lru_cache
 from math import prod
 from pprint import pprint
 from statistics import mode, multimode, median, median_high, median_low
@@ -503,6 +504,7 @@ def day13():
 
     plt.show()
 
+
 def day14():
     file = open("aoc2021/14.in", "r")
     lines = file.readlines()
@@ -527,8 +529,82 @@ def day14():
     least = cnt.most_common()[-1]
     print(most[0][1]-least[1])
 
+def day14_2():
+    file = open("aoc2021/14.in", "r")
+    lines = file.readlines()
+    file.close()
+    polymer = lines.pop(0).strip()
+    lines.pop(0)
+    insertions = defaultdict(str)
+    pairs = defaultdict(int)
+    letters = dict()
+
+    for pair in itertools.pairwise(polymer):
+        pairs[''.join(pair)] += 1
+
+    for line in lines:
+        line = line.strip()
+        insertions[line[0:2]] = line[-1]
+        for c in line:
+            if c.isalpha():
+                if c not in letters:
+                    letters[c] = 0
+    
+    for i in range(40):
+        tmp_pairs = defaultdict(int)
+        for pair, count in pairs.items():
+            tmp_pairs[pair[0]+insertions[pair]] += count
+            tmp_pairs[insertions[pair]+pair[1]] += count
+        pairs = tmp_pairs
+
+    print(pairs)
+
+    for p, c in pairs.items():
+        for l in letters:
+            if l in p:
+                letters[l] += c
+                if p == l+l:
+                    letters[l] += c
+    for l in letters:
+        if letters[l] % 2:
+            letters[l] += 1
+        letters[l] //= 2
+    
+    print(letters)
+    cnt = Counter(letters)
+    most = cnt.most_common(1)[0][1]
+    least = cnt.most_common()[-1][1]
+    print(most-least)
+
+@lru_cache(maxsize=0, typed=False)
+def day15():
+    file = open("aoc2021/15.in", "r")
+    lines = file.readlines()
+    file.close()
+
+    for i, line in enumerate(lines):
+        lines[i] = [int(c) for c in line.strip()]
+    
+    m = n = len(lines)
+
+    risks = np.asarray(lines)
+
+    print(risks)
+    print(m, n)
+
+    @lru_cache(maxsize=0, typed=False)
+    def min_cost(x, y):
+        if x < 0 or y < 0:
+            return 900000000
+        if x == 0 and y == 0:
+            return 0
+        return risks[y][x] + min(min_cost(x-1,y), min_cost(x,y-1))
+    
+    print(min_cost(m-1,n-1))
+
+
 
 if __name__ == "__main__":
-    day14()
+    day15()
 
     
